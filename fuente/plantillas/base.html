@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ titulo }}</title>
+<meta name="description" content="{{ descripcion }}">
+<link rel="canonical" href="{{ base_url }}{{ ruta }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ titulo }}">
+<meta property="og:description" content="{{ descripcion }}">
+<meta property="og:locale" content="es_ES">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ raiz }}estatico/estilo.css">
+{% block cabeza %}{% endblock %}
+</head>
+<body{% if acento %} data-acento="{{ acento }}"{% endif %}>
+
+<nav class="barra" aria-label="Secciones">
+  <a class="marca" href="{{ hub }}">Proyecciones</a>
+  <div class="enlaces">
+    {%- for p in menu %}<a href="{{ p.url }}"{% if p.acento == acento %} aria-current="page"{% endif %}>{{ p.titulo }}</a>{% endfor %}
+  </div>
+</nav>
+
+<main class="marco">
+{% block contenido %}{% endblock %}
+
+<footer class="pie">
+{% block fuente %}{% endblock %}
+<p>Generado el {{ generado }}. Los datos se actualizan solos con una GitHub Action. Parte de <a href="{{ hub }}">Proyecciones</a>.</p>
+</footer>
+</main>
+
+<script src="{{ raiz }}estatico/grafica.js"></script>
+{% block script %}{% endblock %}
+</body>
+</html>

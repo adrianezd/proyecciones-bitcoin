@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>{{ encabezado }}</h1>
+<p class="bajada">{{ bajada }}</p>
+
+<div class="mandos">
+  <div class="mando">
+    <label for="activo">Que miras</label>
+    <select id="activo">
+      {%- for fam, lista in familias %}
+      {%- if familias|length > 1 %}
+      <optgroup label="{{ fam }}">
+        {%- for a in lista %}<option value="{{ a.clave }}">{{ a.nombre }}</option>{% endfor %}
+      </optgroup>
+      {%- else %}
+      {%- for a in lista %}<option value="{{ a.clave }}">{{ a.nombre }}</option>{% endfor %}
+      {%- endif %}
+      {%- endfor %}
+    </select>
+  </div>
+</div>
+
+<section class="resultado">
+  <p class="resultado-intro" id="intro">Ultimo cierre</p>
+  <p class="cifrota" id="ultimo">—</p>
+  <p class="rango" id="cambio"></p>
+</section>
+
+<div class="tarjetas">
+  <div><span class="dato-valor" id="d-ano">—</span><span class="dato-nombre">en los ultimos 12 meses</span></div>
+  <div><span class="dato-valor" id="d-caida">—</span><span class="dato-nombre">peor caida desde un maximo</span></div>
+  <div><span class="dato-valor" id="d-vol">—</span><span class="dato-nombre">volatilidad anualizada</span></div>
+</div>
+
+<h2>Historico</h2>
+<p class="apunte">Arrastra el dedo por encima para leer cualquier fecha.</p>
+<div id="gr-serie"></div>
+
+<h2>Ano a ano</h2>
+<p class="apunte">Rendimiento de cada ano natural. Verde arriba, rojo abajo.</p>
+<div id="gr-anual"></div>
+
+<h2>Lo que hay detras de cada linea</h2>
+<p>{{ explicacion }}</p>
+<p>Los cierres son diarios, asi que aqui no vas a ver el precio de ahora mismo. Para eso hace falta un proveedor de pago. Si el ultimo dato es de hace unos dias, probablemente sea festivo o fin de semana en ese mercado.</p>
+<p>La volatilidad es la desviacion tipica de los rendimientos diarios del ultimo ano, anualizada. Un 15&nbsp;% es un activo tranquilo; mucho mas que eso, no lo es.</p>
+{% endblock %}
+
+{% block fuente %}
+<p>{{ fuente_texto }}</p>
+{% endblock %}
+
+{% block script %}
+<script id="datos" type="application/json">{{ datos_json | safe }}</script>
+<script>
+(function(){
+  const D = JSON.parse(document.getElementById("datos").textContent);
+  const $ = i => document.getElementById(i);
+  const n = Grafica.numero;
+
+  function fmt(v, unidad){
+    if(unidad === "EUR") return Grafica.euros(v);
+    if(v >= 1000) return n(v,0) + " " + unidad;
+    if(v >= 10)   return n(v,2) + " " + unidad;
+    return n(v,4) + " " + unidad;
+  }
+
+  function pintar(clave){
+    const a = D.activos[clave];
+    const corto = v => v >= 1000 ? n(v/1000,1)+"k" : (v >= 10 ? n(v,0) : n(v,2));
+
+    $("intro").textContent = a.nombre + ", ultimo cierre (" + a.serie[a.serie.length-1].f + ")";
+    $("ultimo").textContent = fmt(a.ultimo, a.unidad);
+
+    const signo = a.cambio_ano >= 0 ? "+" : "";
+    Grafica.frase("#cambio", ["Maximo historico de la serie: ", {fuerte: fmt(a.maximo, a.unidad)}, "."]);
+    $("d-ano").textContent = signo + n(a.cambio_ano,1) + " %";
+    $("d-ano").style.color = a.cambio_ano >= 0 ? "var(--acento)" : "var(--alerta)";
+    $("d-caida").textContent = n(a.peor_caida,1) + " %";
+    $("d-vol").textContent = n(a.volatilidad,0) + " %";
+
+    Grafica.linea("#gr-serie", {
+      pasado: a.serie.map(p => ({x: p.f, y: p.v})),
+      futuro: [],
+      escala: a.log ? "log" : "linear",
+      formato: v => fmt(v, a.unidad),
+      escalaCorta: corto,
+      titulo: "Historico de " + a.nombre
+    });
+
+    Grafica.barras("#gr-anual", {
+      datos: a.anual.map(r => ({x: r.anio, y: r.rendimiento})),
+      formato: v => n(v,1) + " %",
+      titulo: "Rendimiento anual"
+    });
+  }
+
+  $("activo").addEventListener("change", e => pintar(e.target.value));
+  pintar(D.primero);
+})();
+</script>
+{% endblock %}

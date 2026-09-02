@@ -1,0 +1,61 @@
+name: Construir y publicar
+
+on:
+  schedule:
+    # Dos veces al dia. Los precios cambian a diario; el INE publica una
+    # vez al mes, asi que con esto sobra.
+    - cron: "0 6,18 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:        # boton manual en la pestaña Actions
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Generar el sitio
+        run: python -m fuente.construir
+
+      # La cache de datos se guarda en el repo: si una fuente publica se
+      # cae, la siguiente ejecucion reutiliza el ultimo dato bueno en vez
+      # de publicar paginas vacias.
+      - name: Guardar la cache de datos
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cache/
+          git diff --staged --quiet || git commit -m "Actualizar datos [skip ci]"
+          git push
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  desplegar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - id: pages
+        uses: actions/deploy-pages@v4
