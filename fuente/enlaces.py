@@ -7,6 +7,8 @@ absoluta de cada sitio hermano. Este fichero es identico en los doce
 repositorios del proyecto para que todos compartan el mismo menu.
 """
 
+import json as _json
+
 USUARIO = "adrianezd"
 
 
@@ -43,3 +45,45 @@ MENU = [
 
 for _p in MENU:
     _p["url"] = sitio(_p["repo"])
+
+
+def _json_seguro(obj) -> str:
+    """Igual que json_seguro en construir.py: escapa lo que podria cerrar
+    la etiqueta <script> o romper el parser de JS."""
+    texto = _json.dumps(obj, ensure_ascii=False)
+    return (texto
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e")
+            .replace("&", "\\u0026")
+            .replace(" ", "\\u2028")
+            .replace(" ", "\\u2029"))
+
+
+def jsonld_pagina(*, titulo: str, descripcion: str, url: str, fuente_nombre: str,
+                   fuente_url: str | None = None,
+                   licencia: str = "https://creativecommons.org/licenses/by/4.0/") -> str:
+    """JSON-LD de la pagina: Dataset (para que Google entienda que es un
+    dato publico, no un articulo) mas BreadcrumbList (Proyecciones > la
+    pagina), como un unico array servido en un <script type="ld+json">.
+    """
+    dataset = {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        "name": titulo,
+        "description": descripcion,
+        "url": url,
+        "license": licencia,
+        "isAccessibleForFree": True,
+        "inLanguage": "es",
+        "creator": {"@type": "Organization", "name": fuente_nombre,
+                    **({"url": fuente_url} if fuente_url else {})},
+    }
+    breadcrumb = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Proyecciones", "item": HUB},
+            {"@type": "ListItem", "position": 2, "name": titulo, "item": url},
+        ],
+    }
+    return _json_seguro([dataset, breadcrumb])
