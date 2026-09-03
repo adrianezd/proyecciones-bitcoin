@@ -26,7 +26,7 @@ MENU = [
     {"repo": "proyecciones-bitcoin", "titulo": "Bitcoin", "acento": "bitcoin",
      "resumen": "Bitcoin, Ethereum y XRP: las tres mayores criptomonedas."},
     {"repo": "proyecciones-bonos", "titulo": "Bonos", "acento": "bonos",
-     "resumen": "Lo que paga cada pais del euro por su deuda a diez anos."},
+     "resumen": "Lo que paga cada pais del euro por su deuda a diez años."},
     {"repo": "proyecciones-vivienda", "titulo": "Vivienda", "acento": "vivienda",
      "resumen": "Precio de compra segun el indice del INE."},
     {"repo": "proyecciones-alquiler", "titulo": "Alquiler", "acento": "alquiler",
@@ -37,7 +37,7 @@ MENU = [
      "resumen": "Precios de la compra. Cobertura escasa, y se avisa."},
     {"repo": "proyecciones-terremotos", "titulo": "Terremotos", "acento": "terremotos",
      "resumen": "Lo que ha temblado en el mundo en las ultimas 24 horas."},
-    {"repo": "proyecciones-sismos", "titulo": "Sismos en Espana", "acento": "sismos",
+    {"repo": "proyecciones-sismos", "titulo": "Sismos en España", "acento": "sismos",
      "resumen": "Cada cuanto tiembla aqui, segun el catalogo historico."},
 ]
 
