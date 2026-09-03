@@ -55,10 +55,22 @@ def escribir(plantilla: str, **contexto) -> None:
     print("  escrito     index.html")
 
 
+RECIENTE_PUNTOS = 450  # cubre ~2 años a resolucion diaria sin diezmar
+
+
 def _paquete_activo(nombre: str, unidad: str, serie: list[dict]) -> dict:
-    """Resume una serie diaria: ultimo, maximo, caida, volatilidad, anual."""
+    """Resume una serie diaria: ultimo, maximo, caida, volatilidad, anual.
+
+    El tramo reciente se deja a resolucion completa (para que el filtro de
+    "ultimo mes" tenga puntos de verdad que dibujar) y solo se reduce el
+    tramo antiguo, que se ve igual de bien con menos puntos.
+    """
     valores = [p["v"] for p in serie]
-    paso = max(1, len(serie) // 300)
+
+    reciente = serie[-RECIENTE_PUNTOS:]
+    resto = serie[:-RECIENTE_PUNTOS] if len(serie) > RECIENTE_PUNTOS else []
+    paso = max(1, len(resto) // 200)
+    serie_grafica = resto[::paso] + reciente
 
     hace_un_ano = valores[-min(len(valores), 252)]
     anual: dict[int, list[float]] = {}
@@ -74,7 +86,7 @@ def _paquete_activo(nombre: str, unidad: str, serie: list[dict]) -> dict:
         "peor_caida": calculo.caidas(valores)["peor"],
         "volatilidad": calculo.volatilidad(valores[-365:]),
         "log": max(valores) / max(min(valores), 1e-9) > 50,
-        "serie": serie[::paso],
+        "serie": serie_grafica,
         "anual": [{"anio": a, "rendimiento": round((v[-1] / v[0] - 1) * 100, 1)}
                   for a, v in sorted(anual.items()) if len(v) > 1 and v[0] > 0],
     }

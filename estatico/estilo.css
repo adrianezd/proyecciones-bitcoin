@@ -179,6 +179,18 @@ select:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
 }
 .dato-nombre{display:block;font-size:.75rem;color:var(--tinta-suave);margin-top:.25rem;}
 
+/* ---------------- Selector de rango temporal ---------------- */
+.rango-tiempo{display:flex;gap:.375rem;margin-top:1rem;flex-wrap:wrap;}
+.rango-tiempo button{
+  font-family:var(--texto);font-size:.8125rem;font-weight:600;
+  padding:.4375rem .75rem;min-height:2rem;
+  color:var(--tinta-suave);background:var(--fondo-2);
+  border:1px solid var(--regla);border-radius:1.25rem;cursor:pointer;
+}
+.rango-tiempo button[aria-current="true"]{
+  background:var(--acento);border-color:var(--acento);color:#fff;
+}
+
 /* ---------------- Graficas ---------------- */
 .lienzo{position:relative;margin-top:1rem;}
 .lienzo svg{display:block;width:100%;height:auto;user-select:none;}

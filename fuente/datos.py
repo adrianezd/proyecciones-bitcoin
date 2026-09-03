@@ -46,9 +46,8 @@ ACTIVOS = [
 ]
 
 
-def _desde_yahoo(simbolo: str) -> list[dict]:
-    """Cierres diarios del endpoint de graficas de Yahoo. Sin clave."""
-    r = httpx.get(f"{YAHOO}{simbolo}", params={"range": "max", "interval": "1d"},
+def _pide_yahoo(simbolo: str, rango: str) -> list[dict]:
+    r = httpx.get(f"{YAHOO}{simbolo}", params={"range": rango, "interval": "1d"},
                   headers=CABECERAS_NAVEGADOR, timeout=40.0, follow_redirects=True)
     r.raise_for_status()
     datos = r.json()
@@ -70,6 +69,28 @@ def _desde_yahoo(simbolo: str) -> list[dict]:
             "v": round(float(cierre), 6),
         })
     return filas
+
+
+def _desde_yahoo(simbolo: str) -> list[dict]:
+    """Cierres diarios del endpoint de graficas de Yahoo. Sin clave.
+
+    Con range=max, Yahoo no da cierres diarios: comprime todo el historico
+    a un punto por trimestre (a veces por mes), asi que un filtro de
+    "ultimo mes" no tendria casi nada que dibujar. Se pide ademas range=2y
+    con resolucion diaria de verdad, y se cose delante del historico largo
+    para que el tramo reciente sí tenga un punto por dia.
+    """
+    largo = _pide_yahoo(simbolo, "max")
+    try:
+        reciente = _pide_yahoo(simbolo, "2y")
+    except Exception:
+        reciente = []
+
+    if not reciente:
+        return largo
+
+    corte = reciente[0]["f"]
+    return [p for p in largo if p["f"] < corte] + reciente
 
 
 def _desde_stooq(simbolo: str) -> list[dict]:

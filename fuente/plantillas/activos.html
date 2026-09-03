@@ -34,6 +34,11 @@
 
 <h2>Historico</h2>
 <p class="apunte">Arrastra el dedo por encima para leer cualquier fecha.</p>
+<div class="rango-tiempo" role="group" aria-label="Periodo de la grafica">
+  <button type="button" data-rango="mes">Ultimo mes</button>
+  <button type="button" data-rango="meses">Ultimos meses</button>
+  <button type="button" data-rango="anos" aria-current="true">Ultimos años</button>
+</div>
 <div id="gr-serie"></div>
 
 <h2>Año a año</h2>
@@ -57,6 +62,8 @@
   const D = JSON.parse(document.getElementById("datos").textContent);
   const $ = i => document.getElementById(i);
   const n = Grafica.numero;
+  let activoActual = D.primero;
+  let rangoActual = "anos";
 
   function fmt(v, unidad){
     if(unidad === "EUR") return Grafica.euros(v);
@@ -65,9 +72,38 @@
     return n(v,4) + " " + unidad;
   }
 
-  function pintar(clave){
-    const a = D.activos[clave];
+  function recortar(serie, rango){
+    if(rango === "anos") return serie;
+    const ultima = new Date(serie[serie.length-1].f);
+    const desde = new Date(ultima);
+    if(rango === "mes")   desde.setMonth(desde.getMonth() - 1);
+    if(rango === "meses") desde.setMonth(desde.getMonth() - 6);
+    const isoDesde = desde.toISOString().slice(0,10);
+    const recorte = serie.filter(p => p.f >= isoDesde);
+    // Si el recorte se queda con muy pocos puntos (activo joven o fuente
+    // con poco historico reciente), mejor mostrar toda la serie que una
+    // grafica casi vacia.
+    return recorte.length >= 3 ? recorte : serie;
+  }
+
+  function dibujarSerie(){
+    const a = D.activos[activoActual];
     const corto = v => v >= 1000 ? n(v/1000,1)+"k" : (v >= 10 ? n(v,0) : n(v,2));
+    const serie = recortar(a.serie, rangoActual);
+
+    Grafica.linea("#gr-serie", {
+      pasado: serie.map(p => ({x: p.f, y: p.v})),
+      futuro: [],
+      escala: rangoActual === "anos" && a.log ? "log" : "linear",
+      formato: v => fmt(v, a.unidad),
+      escalaCorta: corto,
+      titulo: "Historico de " + a.nombre
+    });
+  }
+
+  function pintar(clave){
+    activoActual = clave;
+    const a = D.activos[clave];
 
     $("intro").textContent = a.nombre + ", ultimo cierre (" + a.serie[a.serie.length-1].f + ")";
     $("ultimo").textContent = fmt(a.ultimo, a.unidad);
@@ -79,14 +115,7 @@
     $("d-caida").textContent = n(a.peor_caida,1) + " %";
     $("d-vol").textContent = n(a.volatilidad,0) + " %";
 
-    Grafica.linea("#gr-serie", {
-      pasado: a.serie.map(p => ({x: p.f, y: p.v})),
-      futuro: [],
-      escala: a.log ? "log" : "linear",
-      formato: v => fmt(v, a.unidad),
-      escalaCorta: corto,
-      titulo: "Historico de " + a.nombre
-    });
+    dibujarSerie();
 
     Grafica.barras("#gr-anual", {
       datos: a.anual.map(r => ({x: r.anio, y: r.rendimiento})),
@@ -96,6 +125,17 @@
   }
 
   $("activo").addEventListener("change", e => pintar(e.target.value));
+
+  document.querySelectorAll(".rango-tiempo button").forEach(b => {
+    b.addEventListener("click", () => {
+      rangoActual = b.dataset.rango;
+      document.querySelectorAll(".rango-tiempo button").forEach(o =>
+        o.removeAttribute("aria-current"));
+      b.setAttribute("aria-current", "true");
+      dibujarSerie();
+    });
+  });
+
   pintar(D.primero);
 })();
 </script>
