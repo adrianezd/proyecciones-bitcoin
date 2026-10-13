@@ -46,6 +46,14 @@ MENU = [
 for _p in MENU:
     _p["url"] = sitio(_p["repo"])
 
+# La portada añade dos páginas comunes: el resumen del día y el comparador
+MENU = [
+    {"repo": "proyecciones", "titulo": "Hoy", "acento": "hoy", "url": HUB + "hoy/",
+     "resumen": "Lo mas llamativo de todas las paginas, con el ultimo dato de cada una."},
+    {"repo": "proyecciones", "titulo": "Comparar", "acento": "comparar", "url": HUB + "comparar/",
+     "resumen": "Varias series en la misma grafica."},
+] + MENU
+
 
 def _json_seguro(obj) -> str:
     """Igual que json_seguro en construir.py: escapa lo que podria cerrar
